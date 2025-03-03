@@ -1,0 +1,14 @@
+spring:
+  application:
+    name : PocketPilot
+  data :
+    mongodb:
+      uri : mongodb+srv://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}/${MONGO_DATABASE}?retryWrites=true&w=majority&appName=${MONGO_CLUSTER_APP_NAME}
+  docker:
+    compose:
+      enabled : false
+
+
+
+jwt:
+  secret: ${JWT_SECRET}
