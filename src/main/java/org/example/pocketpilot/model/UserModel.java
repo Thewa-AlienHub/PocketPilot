@@ -11,4 +11,5 @@ public class UserModel {
     private String password;
     private String userName;
     private String userRole;
+    private String currencyCode;
 }

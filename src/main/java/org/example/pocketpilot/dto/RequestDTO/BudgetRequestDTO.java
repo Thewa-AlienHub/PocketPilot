@@ -4,22 +4,20 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.bson.types.ObjectId;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.time.YearMonth;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TransactionRequestDTO {
-
-    private String type;
-    private BigDecimal amount;
+public class BudgetRequestDTO {
+    private String planName;
     private int category;
-    private List<String> tags;
-    private boolean recurring;
-    private LocalDateTime transactionDateTime;
-    private String recurrencePattern;
+    private int budgetType;
+    private BigDecimal budgetAmount;
+    private YearMonth yearMonth;
 }

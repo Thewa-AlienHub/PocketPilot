@@ -36,7 +36,7 @@ public class ResponseController {
         return ((ResponseEntity.BodyBuilder)ResponseEntity.status(response.getStatusCode()).header("Content-Type", new String[]{"application/json"})).body(response.getBody());
     }
 
-    private ResponseEntity<Object> sendResponse(Object object, HttpStatus httpStatus) {
+    public ResponseEntity<Object> sendResponse(Object object, HttpStatus httpStatus) {
         return ((ResponseEntity.BodyBuilder)ResponseEntity.status(httpStatus).header("Content-Type", new String[]{"application/json"})).body(object);
     }
 }

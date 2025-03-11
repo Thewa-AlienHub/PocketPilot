@@ -73,6 +73,12 @@ public class Response {
         this.data = data;
     }
 
+    public Response(ResponseMessage responseMessage, HttpStatus httpStatus, String message) {
+        this.code = responseMessage.getErrorCode().toString();
+        this.message = message;
+        this.status = httpStatus;
+    }
+
 
     public HttpStatus getStatus() {
         return status;

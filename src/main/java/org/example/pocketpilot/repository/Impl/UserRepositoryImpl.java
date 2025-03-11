@@ -1,5 +1,6 @@
 package org.example.pocketpilot.repository.Impl;
 
+import org.bson.types.ObjectId;
 import org.example.pocketpilot.dto.RequestDTO.LoginRequestDTO;
 import org.example.pocketpilot.entities.UserEntity;
 import org.example.pocketpilot.model.UserModel;
@@ -83,6 +84,18 @@ public class UserRepositoryImpl implements UserRepository {
         return mapToUserModel(user);
     }
 
+    @Override
+    public String getCurrencyCodeById(ObjectId userId) {
+        UserEntity user = mongoTemplate.findById(userId, UserEntity.class);
+
+        if (user != null) {
+            return user.getCurrencyCode();
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User Not Found");
+        }
+
+    }
+
 
     private UserModel mapToUserModel(UserEntity entity) {
         UserModel model = new UserModel();
@@ -91,6 +104,7 @@ public class UserRepositoryImpl implements UserRepository {
         model.setEmail(entity.getEmail());
         model.setUserName(entity.getUserName());
         model.setUserRole(entity.getUserRole());
+        model.setCurrencyCode(entity.getCurrencyCode());
         return model;
     }
 
@@ -101,6 +115,7 @@ public class UserRepositoryImpl implements UserRepository {
         entity.setPassword(user.getPassword());
         entity.setUserName(user.getUserName());
         entity.setUserRole(user.getUserRole());
+        entity.setCurrencyCode(user.getCurrencyCode());
         return entity;
     }
 

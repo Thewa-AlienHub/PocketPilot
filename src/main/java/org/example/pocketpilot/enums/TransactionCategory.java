@@ -8,7 +8,8 @@ public enum TransactionCategory {
     FOOD(2, "Food"),
     TRAVEL(3, "Travel"),
     ENTERTAINMENT(4, "Entertainment"),
-    BILLS(5, "Bills");
+    BILLS(5, "Bills"),
+    GOALS(6, "Goals");
 
     private final int id;
     private final String value;
@@ -28,5 +29,10 @@ public enum TransactionCategory {
 
     public static Optional<TransactionCategory> fromId(int id) {
         return Arrays.stream(values()).filter(cat -> cat.id == id).findFirst();
+    }
+    public static Optional<TransactionCategory> fromValue(String value) {
+        return Arrays.stream(values())
+                .filter(cat -> cat.value.equalsIgnoreCase(value))
+                .findFirst();
     }
 }

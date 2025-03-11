@@ -14,4 +14,6 @@ public interface UsersService {
     ResponseEntity<Object> getUsers();
 
     ResponseEntity<Object> getUserPrfile();
+
+//    ResponseEntity<Object> getUserSummaryTransactions();
 }

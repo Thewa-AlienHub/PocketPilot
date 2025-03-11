@@ -1,9 +1,9 @@
 package org.example.pocketpilot.enums;
 
 public enum UserRole {
-    ADMIN(1, "Admin"),
-    PREMIUM_USER(2, "Premium User"),
-    REGULAR_USER(3, "Regular User");
+    ADMIN(1, "ROLE_ADMIN"),
+    PREMIUM_USER(2, "ROLE_PREMIUM_USER"),
+    REGULAR_USER(3, "ROLE_REGULAR_USER");
 
     private final int code;
     private final String roleName;

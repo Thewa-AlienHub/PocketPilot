@@ -8,7 +8,10 @@ import org.example.pocketpilot.model.TransactionModel;
 import org.example.pocketpilot.model.UserModel;
 import org.example.pocketpilot.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -17,9 +20,14 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.server.ResponseStatusException;
 
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public class TransactionRepositoryImpl implements TransactionRepository {
@@ -99,6 +107,90 @@ public class TransactionRepositoryImpl implements TransactionRepository {
     public boolean deleteTransaction(ObjectId id) {
         Query query = new Query(Criteria.where("_id").is(id));
         return mongoTemplate.remove(query, TransactionEntity.class).getDeletedCount() > 0;
+    }
+
+    // Spending Trends Over Time
+    @Override
+    public List<Map<String, Object>> getSpendingTrends(ObjectId userId, LocalDateTime startDate, LocalDateTime endDate) {
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where("userId").is(userId)
+                        .and("transactionDateTime").gte(startDate).lte(endDate)
+                        .and("type").is("expense")),
+                Aggregation.project("amount", "transactionDateTime")
+                        .andExpression("dayOfMonth(transactionDateTime)").as("day"),
+                Aggregation.group("day").sum("amount").as("totalSpent"),
+                Aggregation.project("totalSpent").and("_id").as("day"),  // Renaming _id back to day
+                Aggregation.sort(Sort.by(Sort.Direction.ASC, "day")) // Use Sort.by() instead
+        );
+
+        AggregationResults<Map<String, Object>> results =
+                mongoTemplate.aggregate(aggregation, "transaction", (Class<Map<String, Object>>) (Class<?>) Map.class);
+
+        return results.getMappedResults();
+    }
+
+
+
+    // Income vs Expenses Summary
+    @Override
+    public Map<String, BigDecimal> getIncomeVsExpense(ObjectId userId, LocalDateTime startDate, LocalDateTime endDate) {
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where("userId").is(userId)
+                        .and("transactionDateTime").gte(startDate).lte(endDate)),
+                Aggregation.group("type").sum("amount").as("total")
+        );
+
+        AggregationResults<Map> results = mongoTemplate.aggregate(aggregation, "transaction", Map.class);
+        return results.getMappedResults().stream().collect(
+                Collectors.toMap(
+                        entry -> entry.get("_id").toString(),
+                        entry -> new BigDecimal(entry.get("total").toString())
+                )
+        );
+    }
+
+    // Filtered Transactions by Category and Tags
+    @Override
+    public List<TransactionEntity> getFilteredTransactions(ObjectId userId, LocalDateTime startDate, LocalDateTime endDate, List<String> categories, List<String> tags) {
+        Criteria criteria = Criteria.where("userId").is(userId)
+                .and("transactionDateTime").gte(startDate).lte(endDate);
+
+        if (categories != null && !categories.isEmpty()) {
+            criteria.and("category").in(categories);
+        }
+        if (tags != null && !tags.isEmpty()) {
+            criteria.and("tags").in(tags);
+        }
+
+        return mongoTemplate.find(
+                new Query(criteria),
+                TransactionEntity.class
+        );
+    }
+
+    @Override
+    public void saveAll(List<TransactionEntity> transactions) {
+        mongoTemplate.insertAll(transactions);
+    }
+
+    @Override
+    public List<TransactionEntity> findByUserIdAndDateAfter(ObjectId userId, int months, String category) {
+        LocalDateTime fromDate = LocalDateTime.now().minusMonths(months);
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("userId").is(userId)
+                        .and("category").is(category)
+                .and("transactionDateTime").gte(fromDate));
+
+        return mongoTemplate.find(query, TransactionEntity.class);
+    }
+
+    @Override
+    public List<TransactionEntity> getUserTransactions(ObjectId userId) {
+        return mongoTemplate.find(
+                Query.query(Criteria.where("userId").is(userId)),
+                TransactionEntity.class
+        );
     }
 
 

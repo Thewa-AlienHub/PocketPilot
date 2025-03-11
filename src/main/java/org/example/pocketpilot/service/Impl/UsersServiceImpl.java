@@ -56,7 +56,7 @@ public class UsersServiceImpl  extends ResponseController implements UsersServic
 
         } catch (ResponseStatusException ex) {
 
-            return sendResponse(new ErrorMessage((HttpStatus) ex.getStatusCode(), ex.getReason()));
+            return sendResponse(new ErrorMessage((HttpStatus) ex.getStatusCode(), ex.getReason()), (HttpStatus) ex.getStatusCode());
 
         } catch (Exception e) {
             e.printStackTrace(); // Log the actual error
@@ -91,6 +91,7 @@ public class UsersServiceImpl  extends ResponseController implements UsersServic
             // Create and map UserModel
             UserModel userModel = new UserModel();
             userModel.setUserName(generatedUserName);
+            userModel.setCurrencyCode(dto.getCurrencyCode());
             userModel.setPassword(dto.getPassword());
             userModel.setEmail(dto.getEmail());
             userModel.setName(dto.getName());
@@ -163,6 +164,11 @@ public class UsersServiceImpl  extends ResponseController implements UsersServic
             return sendResponse(new ErrorMessage(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred during get users"));
         }
     }
+
+//    @Override
+//    public ResponseEntity<Object> getUserSummaryTransactions() {
+//
+//    }
 
 
     private String genarateUserName(String name){

@@ -1,5 +1,6 @@
 package org.example.pocketpilot.repository;
 
+import org.bson.types.ObjectId;
 import org.example.pocketpilot.dto.RequestDTO.LoginRequestDTO;
 import org.example.pocketpilot.model.UserModel;
 
@@ -16,4 +17,6 @@ public interface UserRepository {
     List<UserModel> getUsers();
 
     UserModel getUserByUserName(String username);
+
+    String getCurrencyCodeById(ObjectId userId);
 }

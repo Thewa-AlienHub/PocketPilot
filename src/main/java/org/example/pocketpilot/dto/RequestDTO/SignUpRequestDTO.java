@@ -10,5 +10,6 @@ public class SignUpRequestDTO {
     private String password;
     private String confirmPassword;
     private int userRole;
+    private String currencyCode;
 
 }

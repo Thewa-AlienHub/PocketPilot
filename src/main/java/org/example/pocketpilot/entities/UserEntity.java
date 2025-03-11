@@ -16,5 +16,6 @@ public class UserEntity {
     private String password;
     private String userName;
     private String userRole;
+    private String currencyCode;
 }
 
