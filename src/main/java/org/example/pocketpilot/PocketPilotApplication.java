@@ -9,7 +9,7 @@ public class PocketPilotApplication {
     public static void main(String[] args) {
         SpringApplication.run(PocketPilotApplication.class, args);
 
-        System.out.println("Hello World!");
+
     }
 
 }

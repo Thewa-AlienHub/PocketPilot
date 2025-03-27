@@ -1,0 +1,30 @@
+server:
+  servlet:
+    context-path: /
+spring:
+  application:
+    name : PocketPilot
+  data :
+    mongodb:
+      uri : mongodb+srv://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOST}/${MONGO_DATABASE}?retryWrites=true&w=majority&appName=${MONGO_CLUSTER_APP_NAME}
+  docker:
+    compose:
+      enabled : false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    smtp:
+      auth: true
+      starttls:
+        enable: true
+
+
+
+jwt:
+  secret: ${JWT_SECRET}
+
+currency:
+  api-url: ${CURRENCY_API_URL}
+  api-key: ${CURRENCY_API_KEY}
