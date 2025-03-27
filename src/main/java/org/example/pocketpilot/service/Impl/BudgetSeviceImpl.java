@@ -7,7 +7,7 @@ import org.example.pocketpilot.commonlib.Controller.ResponseController;
 import org.example.pocketpilot.commonlib.ErrorMessage;
 import org.example.pocketpilot.commonlib.Response;
 import org.example.pocketpilot.dto.BudgetFilterDTO;
-import org.example.pocketpilot.dto.RequestDTO.BudgetRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.BudgetRequestDTO;
 import org.example.pocketpilot.entities.BudgetEntity;
 import org.example.pocketpilot.enums.BudgetTypes;
 import org.example.pocketpilot.enums.TransactionCategory;
@@ -61,12 +61,17 @@ public class BudgetSeviceImpl extends ResponseController implements BudgetServic
 
             // Get recommendation
             BigDecimal recommendedBudget = calculateRecommendedBudget(userId, category, yearMonth);
-            String message = "Recommended budget for " + category + ": " + recommendedBudget;
+
 
             BudgetEntity budgetEntity = mapToBudgetEntity(dto,userId, Status.ACTIVE.getId());
             budgetRepository.saveBudgetPlan(budgetEntity);
+            if(recommendedBudget.compareTo(BigDecimal.ZERO) == 0){
+                return sendResponse(new Response(ResponseMessage.SUCCESS, HttpStatus.OK));
+            }else {
+                String message = "Recommended budget for " + category + ": " + recommendedBudget;
+                return sendResponse(new Response(ResponseMessage.SUCCESS, HttpStatus.OK,message));
+            }
 
-            return sendResponse(new Response(ResponseMessage.SUCCESS, HttpStatus.OK,message));
 
 
         }catch (Exception e) {
@@ -95,11 +100,11 @@ public class BudgetSeviceImpl extends ResponseController implements BudgetServic
 
                  if((BudgetTypes.MONTHLYWISE.getId())==dto.getBudgetType()){
                     YearMonth currentYearMonth = YearMonth.now();
-                     query.addCriteria(Criteria.where("yearMonth").is(currentYearMonth));
+                     query.addCriteria(Criteria.where("yearMonth").is(currentYearMonth.toString()));
                 }
 
                 if (dto.getCategory() > 0) {
-                    query.addCriteria(Criteria.where("category").is(dto.getCategory()));
+                    query.addCriteria(Criteria.where("category").is(TransactionCategory.fromId(dto.getCategory()).get().getValue()));
                 }
 
                 List<BudgetModel> budgetPlanList = budgetRepository.findBudget(query);
@@ -114,9 +119,9 @@ public class BudgetSeviceImpl extends ResponseController implements BudgetServic
     }
 
     @Override
-    public boolean updateBudgetPlan(BudgetRequestDTO dto,ObjectId userId , BigDecimal transactionAmount) {
+    public boolean updateBudgetPlan(int Category,ObjectId userId , BigDecimal transactionAmount,String userEmail) {
         try{
-            String category = (TransactionCategory.fromId(dto.getCategory()).get().getValue());
+            String category = (TransactionCategory.fromId(Category).get().getValue());
 
             //get categoory-wise budgets
             List<BudgetEntity> categoryWiseBudgets = budgetRepository.findCategoryWiseBudgets(userId,category);
@@ -127,7 +132,7 @@ public class BudgetSeviceImpl extends ResponseController implements BudgetServic
             boolean budgetUpdated = false;
 
             for (BudgetEntity budgetEntity : categoryWiseBudgets) {
-                budgetUpdated = budgetRepository.updateSpentAmount(budgetEntity,transactionAmount);
+                budgetUpdated = budgetRepository.updateSpentAmount(budgetEntity,transactionAmount,userEmail);
                 if (budgetUpdated) {
                     log.info("HIT - BudgetService | uppdateBudgetPlan | categoryWise budget updated : {}", budgetEntity);
                 }else {
@@ -137,7 +142,7 @@ public class BudgetSeviceImpl extends ResponseController implements BudgetServic
             }
 
             for (BudgetEntity budgetEntity : monthlyWiseBudgets) {
-                budgetUpdated = budgetRepository.updateSpentAmount(budgetEntity,transactionAmount);
+                budgetUpdated = budgetRepository.updateSpentAmount(budgetEntity,transactionAmount,userEmail);
 
                 if (budgetUpdated) {
                     log.info("HIT - BudgetService | uppdateBudgetPlan | monthlyWise budget updated : {}", budgetEntity);
@@ -202,7 +207,7 @@ public class BudgetSeviceImpl extends ResponseController implements BudgetServic
                 .category(category)
                 .budgetAmount(dto.getBudgetAmount())
                 .spentAmount(BigDecimal.ZERO)
-                .yearMonth(dto.getYearMonth())
+                .yearMonth(dto.getYearMonth().toString())
                 .budgetType(dto.getBudgetType())
                 .Status(Status)
                 .build();

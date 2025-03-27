@@ -1,23 +1,20 @@
-package org.example.pocketpilot.service.impl;
+package org.example.pocketpilot.service.Impl;
 
 import org.bson.types.ObjectId;
 import org.example.pocketpilot.commonlib.Response;
 import org.example.pocketpilot.components.NotificationQueue;
-import org.example.pocketpilot.dto.RequestDTO.TransactionRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.TransactionRequestDTO;
 import org.example.pocketpilot.entities.TransactionEntity;
-import org.example.pocketpilot.model.TransactionModel;
 import org.example.pocketpilot.repository.TransactionRepository;
 import org.example.pocketpilot.repository.UserRepository;
 import org.example.pocketpilot.service.BudgetService;
 import org.example.pocketpilot.service.FinancialGoalService;
-import org.example.pocketpilot.service.Impl.TransactionServiceImpl;
 import org.example.pocketpilot.utils.CurencyConversionService;
 import org.example.pocketpilot.utils.CustomUserDetails;
 import org.example.pocketpilot.utils.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

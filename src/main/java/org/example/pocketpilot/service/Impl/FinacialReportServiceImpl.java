@@ -3,7 +3,7 @@ package org.example.pocketpilot.service.Impl;
 import org.bson.types.ObjectId;
 import org.example.pocketpilot.commonlib.Controller.ResponseController;
 import org.example.pocketpilot.commonlib.ErrorMessage;
-import org.example.pocketpilot.dto.RequestDTO.FinancialReportRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.FinancialReportRequestDTO;
 import org.example.pocketpilot.entities.TransactionEntity;
 import org.example.pocketpilot.repository.TransactionRepository;
 import org.example.pocketpilot.service.FinancialReportService;
@@ -15,7 +15,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +46,7 @@ public class FinacialReportServiceImpl extends ResponseController implements Fin
             ObjectId userId = userDetails.getUserId();
 
             List<Map<String, Object>> trends = transactionRepository.getSpendingTrends(userId, dto.getStartDate(), dto.getEndDate());
+
             return trends.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(trends);
 
         }catch (Exception e) {
@@ -70,7 +70,14 @@ public class FinacialReportServiceImpl extends ResponseController implements Fin
            ObjectId userId = userDetails.getUserId();
 
            Map<String, BigDecimal> summary = transactionRepository.getIncomeVsExpense(userId, dto.getStartDate(), dto.getEndDate());
-           return summary != null && !summary.isEmpty() ? ResponseEntity.ok(summary) : ResponseEntity.noContent().build();
+           if (summary.isEmpty()) {
+               System.out.println("No income vs expense found");
+           }
+           if(summary != null && !summary.isEmpty() ){
+               return sendResponse(summary,HttpStatus.OK) ;}
+            else {
+                return sendResponse(new ErrorMessage(HttpStatus.NOT_FOUND, "There is No any Transactions done in that period"),HttpStatus.NOT_FOUND);
+            }
 
 
        }catch (Exception e){

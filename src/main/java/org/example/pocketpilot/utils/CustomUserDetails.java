@@ -11,11 +11,13 @@ public class CustomUserDetails implements UserDetails {
     private final ObjectId userId;
     private final String username;
     private final String role;
+    private final String userEmail;
 
-    public CustomUserDetails(ObjectId userId, String username, String role) {
+    public CustomUserDetails(ObjectId userId, String username, String role , String userEmail) {
         this.userId = userId;
         this.username = username;
         this.role = role;
+        this.userEmail = userEmail;
     }
 
     public ObjectId getUserId() {
@@ -35,6 +37,12 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public String getUsername() {
         return username;
+    }
+
+
+
+    public String getUserEmail() {
+        return userEmail;
     }
 
     @Override

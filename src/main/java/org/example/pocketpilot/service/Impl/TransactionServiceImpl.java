@@ -7,11 +7,10 @@ import org.example.pocketpilot.commonlib.Controller.ResponseController;
 import org.example.pocketpilot.commonlib.ErrorMessage;
 import org.example.pocketpilot.commonlib.Response;
 import org.example.pocketpilot.components.NotificationQueue;
-import org.example.pocketpilot.dto.RequestDTO.BudgetRequestDTO;
-import org.example.pocketpilot.dto.RequestDTO.TransactionRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.BudgetRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.TransactionRequestDTO;
 import org.example.pocketpilot.dto.TransactionFilterDTO;
 import org.example.pocketpilot.entities.TransactionEntity;
-import org.example.pocketpilot.entities.UserEntity;
 import org.example.pocketpilot.enums.NotificationType;
 import org.example.pocketpilot.enums.TransactionCategory;
 import org.example.pocketpilot.enums.common.ResponseMessage;
@@ -22,13 +21,13 @@ import org.example.pocketpilot.repository.TransactionRepository;
 import org.example.pocketpilot.repository.UserRepository;
 import org.example.pocketpilot.service.BudgetService;
 import org.example.pocketpilot.service.FinancialGoalService;
-import org.example.pocketpilot.service.NotificationService;
 import org.example.pocketpilot.service.TransactionService;
 import org.example.pocketpilot.utils.CurencyConversionService;
 import org.example.pocketpilot.utils.CustomUserDetails;
 import org.example.pocketpilot.utils.JwtUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -72,6 +70,7 @@ public class TransactionServiceImpl extends ResponseController implements Transa
             }
             String userRole = authentication.getAuthorities().toString();
             ObjectId userId = userDetails.getUserId();
+            String userEmail = userDetails.getUserEmail();
 
 
 
@@ -81,7 +80,10 @@ public class TransactionServiceImpl extends ResponseController implements Transa
             BigDecimal convertedAmount = curencyConversionService.convertCurrency(dto.getAmount(),UserCurrency,"LKR");
 
             //check the unusual spending pattern
-            detectUnusualSpending(userId,TransactionCategory.fromId(dto.getCategory()).get().getValue(),convertedAmount);
+            if("expense".equals(dto.getType())) {
+                detectUnusualSpending(userId,TransactionCategory.fromId(dto.getCategory()).get().getValue(),convertedAmount,userEmail);
+            }
+
 
             //check the invest and send money for goals
             if("income".equalsIgnoreCase(dto.getType())){
@@ -89,7 +91,7 @@ public class TransactionServiceImpl extends ResponseController implements Transa
             }
 
 
-            TransactionModel transactionModel = TransactionModel.builder()
+            TransactionEntity transaction = TransactionEntity.builder()
                     .userId(userId)
                     .type(dto.getType())
                     .amount(convertedAmount)
@@ -97,19 +99,17 @@ public class TransactionServiceImpl extends ResponseController implements Transa
                     .tags(dto.getTags())
                     .transactionDateTime(dto.getTransactionDateTime())
                     .recurring(dto.isRecurring())
-                    .recurrencePattern(dto.getRecurrencePattern())
+                    .recurrencePattern(dto.isRecurring()?dto.getRecurrencePattern():null)
                     .nextOccurrence(dto.isRecurring()? calculateNextOccurrence(dto.getRecurrencePattern()): null)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
+                    .status(dto.isRecurring()? Status.INITIALIZED:null)
                     .build();
 
-            boolean transactionDone = transactionRepository.save(transactionModel);
+            boolean transactionDone = transactionRepository.save(transaction);
 
             if (transactionDone) {
-                BudgetRequestDTO requestDTO = BudgetRequestDTO.builder()
-                        .category(dto.getCategory())
-                        .build();
-                boolean updated = budgetService.updateBudgetPlan(requestDTO,userId,convertedAmount);
+                boolean updated = budgetService.updateBudgetPlan(dto.getCategory(),userId,convertedAmount,userEmail);
 
 
             }
@@ -129,13 +129,27 @@ public class TransactionServiceImpl extends ResponseController implements Transa
 
     @Override
     public ResponseEntity<Object> getFilteredTransactions(TransactionFilterDTO dto) {
-        List<TransactionModel>transactions = new ArrayList<>();
-        transactions= transactionRepository.findTransactionByFilter(dto)
-                .stream()
-                .map(this::convertToModel)
-                .collect(Collectors.toList());
+        try {
 
-        return ResponseEntity.ok(transactions);
+            Authentication authentication = getAuthentication();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return sendResponse(new ErrorMessage(HttpStatus.UNAUTHORIZED, "User is not authenticated"));
+            }
+            ObjectId userId = userDetails.getUserId();
+
+
+            List<TransactionModel> transactions = new ArrayList<>();
+            transactions = transactionRepository.findTransactionByFilter(dto,userId)
+                    .stream()
+                    .map(this::convertToModel)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(transactions);
+        }catch (Exception e) {
+            e.printStackTrace();
+            return sendResponse(new ErrorMessage(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while filtering the transaction"));
+        }
     }
 
     @Override
@@ -216,11 +230,11 @@ public class TransactionServiceImpl extends ResponseController implements Transa
         }
     }
 
-    public boolean detectUnusualSpending( ObjectId userId , String Category, BigDecimal transactionAmount) {
+    public boolean detectUnusualSpending( ObjectId userId , String Category, BigDecimal transactionAmount,String UserEmail) {
 
 
             List<TransactionEntity> transactions = transactionRepository.findByUserIdAndDateAfter(
-                    userId, 5,Category
+                    userId, 5,Category,"expense"
             );
 
             // Map to store max transaction amount per month
@@ -259,6 +273,8 @@ public class TransactionServiceImpl extends ResponseController implements Transa
 
                 NotificationModel notificationModel = NotificationModel.builder()
                         .userId(userId)
+                        .userEmail(UserEmail)
+                        .enableEmailNotification(true)
                         .subject("Unusual spending")
                         .msgBody(NotificationMessage)
                         .type(NotificationType.IMMEDIATE)
@@ -276,6 +292,105 @@ public class TransactionServiceImpl extends ResponseController implements Transa
 
     }
 
+    @Scheduled(cron = "0 0 0 * * ?")// Runs every day at 12:00 AM
+    @Override
+    public void processRecurringTransactions() {
+        LocalDateTime now = LocalDateTime.now();
+//        LocalDateTime now = LocalDateTime.of(2025, 4, 21, 19, 21, 21);
+
+        List<TransactionEntity> transactions = transactionRepository.findRecurringTransactions(now);
+        List<TransactionEntity> missedTransactions = transactionRepository.findMissedRecurringTransactions(now);
+        List<TransactionEntity> upcomingTransactions = transactionRepository.findRecurringUpcomingTransactions(now);
+
+        for (TransactionEntity transaction : transactions) {
+            try {
+
+                // Calculate next occurrence based on recurrencePattern
+                LocalDateTime nextOccurrence = calculateNextOccurrence(transaction.getRecurrencePattern());
+
+                // Update next occurrence in DB
+                transactionRepository.updateSuccessStatus(transaction.getId(), Status.SUCCESS, LocalDateTime.now());
+
+                processPayment(transaction ,nextOccurrence);
+
+
+
+                log.info("Processed recurring transaction: {} - Next occurrence: {}", transaction.getId(), nextOccurrence);
+            } catch (Exception e) {
+                log.error("Error processing transaction: {}", transaction.getId(), e);
+            }
+        }
+
+        for (TransactionEntity missedtransaction : missedTransactions) {
+
+            String NotificationMessage = "You Missed the Recurring Payment In " +
+                    missedtransaction.getCategory()+" Category , \n Amount :" + missedtransaction.getAmount() + "\n The Occurrence Date is " + missedtransaction.getNextOccurrence();
+
+            NotificationModel notificationModel = NotificationModel.builder()
+                    .userId(missedtransaction.getUserId())
+                    .enableEmailNotification(true)
+                    .subject("Missed Recuring Payment")
+                    .msgBody(NotificationMessage)
+                    .type(NotificationType.SCHEDULED)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .status(Status.INITIALIZED)
+                    .build();
+
+            notificationQueue.enqueue(notificationModel);
+        }
+
+        for (TransactionEntity upcomingtransaction : upcomingTransactions) {
+
+            String NotificationMessage = "There is Recurring Payment In " +
+                    upcomingtransaction.getCategory()+" Category ,\n  Amount :" + upcomingtransaction.getAmount() +","+
+                    "\n The Recuring will be process in " + upcomingtransaction.getNextOccurrence();
+
+            NotificationModel notificationModel = NotificationModel.builder()
+                    .userId(upcomingtransaction.getUserId())
+                    .enableEmailNotification(true)
+                    .subject("Upcoming Recuring Payment")
+                    .msgBody(NotificationMessage)
+                    .type(NotificationType.SCHEDULED)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .status(Status.INITIALIZED)
+                    .build();
+
+            notificationQueue.enqueue(notificationModel);
+
+        }
+    }
+
+    private void processPayment(TransactionEntity transaction , LocalDateTime nextOccurrence) {
+
+        //create New Transaction with updated next occurence date
+        transaction.setId(null);
+        transaction.setNextOccurrence(nextOccurrence);
+        transaction.setStatus(Status.INITIALIZED);
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setUpdatedAt(LocalDateTime.now());
+        transaction.setTransactionDateTime(LocalDateTime.now());
+
+        transactionRepository.save(transaction);
+
+        String NotificationMessage = "SuccessFully Processd the Recurring Payment In " +
+                transaction.getCategory()+" Category , Amount :" + transaction.getAmount();
+
+        NotificationModel notificationModel = NotificationModel.builder()
+                .userId(transaction.getUserId())
+                .enableEmailNotification(true)
+                .subject("Recuuring Payment")
+                .msgBody(NotificationMessage)
+                .type(NotificationType.SCHEDULED)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .status(Status.INITIALIZED)
+                .build();
+
+        notificationQueue.enqueue(notificationModel);
+
+    }
 
     private TransactionModel convertToModel(TransactionEntity entity) {
         //check currency and convert
@@ -284,8 +399,8 @@ public class TransactionServiceImpl extends ResponseController implements Transa
         BigDecimal convertedAmount = curencyConversionService.convertCurrency(entity.getAmount(),"LKR",UserCurrency);
 
         return TransactionModel.builder()
-                .id(entity.getId())
-                .userId(entity.getUserId())
+                .id(entity.getId().toHexString())
+                .userId(entity.getUserId().toHexString())
                 .type(entity.getType())
                 .amount(convertedAmount)
                 .category(entity.getCategory())

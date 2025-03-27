@@ -10,7 +10,9 @@ public enum Status {
     INACTIVE(4, "Inactive"),
     INITIALIZED(5, "Initialized"),
     SENT(6, "Sent"),
-    VIEWED(7, "Viewed");
+    VIEWED(7, "Viewed"),
+    SUCCESS(8, "Success"),
+    FAILED(9,"Failed");
 
 
     private final int id;

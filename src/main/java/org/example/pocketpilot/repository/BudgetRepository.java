@@ -22,7 +22,7 @@ public interface BudgetRepository {
 
     List<BudgetEntity> findMonthlyWiseBudgets(ObjectId userId, String category);
 
-    boolean updateSpentAmount(BudgetEntity budgets, BigDecimal transactionAmount);
+    boolean updateSpentAmount(BudgetEntity budgets, BigDecimal transactionAmount,String userEmail);
 
     List<BudgetEntity> findRecentBudgets(ObjectId userId, String category, int months);
 

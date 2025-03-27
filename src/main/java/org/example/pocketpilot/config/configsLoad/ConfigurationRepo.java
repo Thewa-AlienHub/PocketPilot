@@ -1,4 +1,4 @@
-package org.example.pocketpilot.config.Configsload;
+package org.example.pocketpilot.config.configsLoad;
 
 import org.example.pocketpilot.entities.Configs.ConfigurationEntity;
 import org.springframework.data.mongodb.repository.MongoRepository;

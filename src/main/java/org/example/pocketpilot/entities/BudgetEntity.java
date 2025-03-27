@@ -26,7 +26,7 @@ public class BudgetEntity {
     private int budgetType;
     private BigDecimal budgetAmount;
     private BigDecimal spentAmount;
-    private YearMonth yearMonth;
+    private String yearMonth;
     private int Status;
 
 }

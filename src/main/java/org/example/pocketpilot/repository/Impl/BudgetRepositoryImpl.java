@@ -33,24 +33,37 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BudgetRepositoryImpl implements BudgetRepository {
 
-    @Autowired
+
     private MongoTemplate mongoTemplate;
     private NotificationQueue notificationQueue;
 
-    public BudgetRepositoryImpl(MongoTemplate mongoTemplate) {
+    @Autowired
+    public BudgetRepositoryImpl(MongoTemplate mongoTemplate , NotificationQueue notificationQueue) {
         this.mongoTemplate = mongoTemplate;
+        this.notificationQueue = notificationQueue;
     }
 
 
     @Override
     public boolean budgetPlanExists(ObjectId userId, String category, YearMonth yearMonth,int BudgetType) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("userId").is(userId)
-                        .and("budgetType").is(BudgetType)
-                .and("category").is(category)
-                .and("yearMonth").is(yearMonth)
-        );
-        return mongoTemplate.exists(query, BudgetEntity.class);
+        try{
+            Query query = new Query();
+            query.addCriteria(Criteria.where("userId").is(userId)
+                    .and("budgetType").is(BudgetType)
+                    .and("category").is(category)
+            );
+
+            // Only add yearMonth criteria if budgetType is 1
+            if (BudgetType == (BudgetTypes.MONTHLYWISE.getId())) {
+                query.addCriteria(Criteria.where("yearMonth").is(yearMonth.toString()));
+            }
+
+            return mongoTemplate.exists(query, BudgetEntity.class);
+        } catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to check exist budget plan", e);
+
+        }
+
     }
 
     @Override
@@ -98,7 +111,7 @@ public class BudgetRepositoryImpl implements BudgetRepository {
     }
 
     @Override
-    public boolean updateSpentAmount(BudgetEntity budgets, BigDecimal transactionAmount) {
+    public boolean updateSpentAmount(BudgetEntity budgets, BigDecimal transactionAmount,String userEmail) {
         try{
             BigDecimal newSpentAmount = budgets.getSpentAmount().add(transactionAmount);
             BigDecimal budgetAmount = budgets.getBudgetAmount();
@@ -130,6 +143,7 @@ public class BudgetRepositoryImpl implements BudgetRepository {
                 if (notificationMessage != null) {
                     NotificationModel notification = NotificationModel.builder()
                             .userId(budgets.getUserId())
+                            .userEmail(userEmail)
                             .subject("Budget Plan Warning")
                             .msgBody(notificationMessage)
                             .type(NotificationType.IMMEDIATE)
@@ -186,7 +200,7 @@ public class BudgetRepositoryImpl implements BudgetRepository {
                 .category(entity.getCategory())
                 .budgetAmount(entity.getBudgetAmount())
                 .spentAmount(entity.getSpentAmount())
-                .yearMonth(entity.getYearMonth())
+                .yearMonth(YearMonth.parse(entity.getYearMonth()))
                 .Status(Status.fromId(entity.getStatus()).get().getValue())
                 .build();
     }

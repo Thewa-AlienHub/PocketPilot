@@ -4,6 +4,7 @@ import io.micrometer.common.KeyValues;
 import org.bson.types.ObjectId;
 import org.example.pocketpilot.dto.TransactionFilterDTO;
 import org.example.pocketpilot.entities.TransactionEntity;
+import org.example.pocketpilot.enums.common.Status;
 import org.example.pocketpilot.model.TransactionModel;
 import org.example.pocketpilot.model.UserModel;
 
@@ -16,9 +17,9 @@ import java.util.Optional;
 
 public interface TransactionRepository {
 
-    boolean save(TransactionModel transactionModel);
+    boolean save(TransactionEntity transactionModel);
 
-    List<TransactionEntity>findTransactionByFilter(TransactionFilterDTO transactionFilter);
+    List<TransactionEntity>findTransactionByFilter(TransactionFilterDTO transactionFilter ,ObjectId userId);
 
     Optional<TransactionEntity> findById(ObjectId id);
 
@@ -38,7 +39,19 @@ public interface TransactionRepository {
 
     void saveAll(List<TransactionEntity> transactions);
 
-    List<TransactionEntity> findByUserIdAndDateAfter(ObjectId userId,int months, String category);
+    List<TransactionEntity> findByUserIdAndDateAfter(ObjectId userId,int months, String category,String type);
 
     List<TransactionEntity>getUserTransactions(ObjectId userId);
+
+    List<TransactionEntity> findRecurringTransactions(LocalDateTime now);
+
+    boolean updateSuccessStatus(ObjectId id, Status status, LocalDateTime now);
+
+    List<TransactionEntity> findMissedRecurringTransactions(LocalDateTime now);
+
+    List<TransactionEntity> findRecurringUpcomingTransactions(LocalDateTime now);
+
+    void deleteAll();
+
+    List<TransactionEntity> findAll();
 }

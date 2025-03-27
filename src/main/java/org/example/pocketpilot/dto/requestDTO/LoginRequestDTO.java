@@ -1,4 +1,4 @@
-package org.example.pocketpilot.dto.RequestDTO;
+package org.example.pocketpilot.dto.requestDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

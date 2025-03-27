@@ -5,9 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.pocketpilot.commonlib.Controller.ResponseController;
 import org.example.pocketpilot.commonlib.ErrorMessage;
 import org.example.pocketpilot.commonlib.Response;
-import org.example.pocketpilot.dto.RequestDTO.LoginRequestDTO;
-import org.example.pocketpilot.dto.ResponseDTO.LoginResponseDTO;
-import org.example.pocketpilot.dto.RequestDTO.SignUpRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.LoginRequestDTO;
+import org.example.pocketpilot.dto.responseDTO.LoginResponseDTO;
+import org.example.pocketpilot.dto.requestDTO.SignUpRequestDTO;
 import org.example.pocketpilot.enums.common.ResponseMessage;
 import org.example.pocketpilot.enums.UserRole;
 import org.example.pocketpilot.model.UserModel;
@@ -44,7 +44,7 @@ public class UsersServiceImpl  extends ResponseController implements UsersServic
             UserModel user = userRepository.authenticateUser(dto);
 
             // Generate token
-            String token = jwtUtil.generateToken(dto.getUsername(), user.getUserRole(), user.getId());
+            String token = jwtUtil.generateToken(dto.getUsername(), user.getUserRole(), user.getId() , user.getEmail());
 
             // Create login response
             LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
@@ -100,7 +100,7 @@ public class UsersServiceImpl  extends ResponseController implements UsersServic
             // Save user
             userRepository.save(userModel);
 
-            return sendResponse(new Response(ResponseMessage.SUCCESS, HttpStatus.OK));
+            return sendResponse(new Response(ResponseMessage.SUCCESS, HttpStatus.OK,"UserName : "+generatedUserName));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -171,12 +171,13 @@ public class UsersServiceImpl  extends ResponseController implements UsersServic
 //    }
 
 
-    private String genarateUserName(String name){
+    private String genarateUserName(String name) {
         String uniqueId = String.valueOf(System.currentTimeMillis());
+        String lastFourDigits = uniqueId.substring(uniqueId.length() - 4); // Extract last 4 characters
         String sanitizedUsername = name.replaceAll("\\s+", "").toLowerCase();
-        return sanitizedUsername + uniqueId;
-
+        return sanitizedUsername + lastFourDigits;
     }
+
 
 
 

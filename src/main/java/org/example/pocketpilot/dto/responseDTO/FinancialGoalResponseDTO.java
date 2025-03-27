@@ -1,6 +1,8 @@
-package org.example.pocketpilot.dto.ResponseDTO;
+package org.example.pocketpilot.dto.responseDTO;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +23,12 @@ public class FinancialGoalResponseDTO {
     private String goalName;
     private BigDecimal targetAmount;
     private BigDecimal currentAmount;
+    @JsonIgnore  // This prevents the raw value from being serialized in the JSON response
     private BigDecimal progressPrecentage;
+
+    @JsonProperty("progressPrecentage")
+    public String getFormattedProgressPrecentage() {
+        return progressPrecentage != null ? String.format("%.2f%%", progressPrecentage) : "0.00%";
+    }
 
 }

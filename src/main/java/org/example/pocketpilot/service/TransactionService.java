@@ -2,9 +2,10 @@ package org.example.pocketpilot.service;
 
 
 import org.bson.types.ObjectId;
-import org.example.pocketpilot.dto.RequestDTO.TransactionRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.TransactionRequestDTO;
 import org.example.pocketpilot.dto.TransactionFilterDTO;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 
 public interface TransactionService {
 
@@ -18,4 +19,7 @@ public interface TransactionService {
     ResponseEntity<Object> deleteTransactions(ObjectId id);
 
     ResponseEntity<Object> getTransactionById(ObjectId id);
+
+    @Scheduled(cron = "0 0 0 * * ?")// Runs every day at 12:00 AM
+    void processRecurringTransactions();
 }

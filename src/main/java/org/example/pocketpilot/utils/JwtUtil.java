@@ -26,12 +26,12 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
-    public String generateToken(String username, String role , ObjectId userId) {
+    public String generateToken(String username, String role , ObjectId userId , String userEmail) {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .addClaims(Map.of("userId", userId.toHexString(), "role", role))
+                .addClaims(Map.of("userId", userId.toHexString(), "role", role , "userEmail", userEmail))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -59,11 +59,20 @@ public class JwtUtil {
                 .get("role", String.class);
     }
 
+    public String extractUserEmail(String token) {
+        return Jwts.parserBuilder().setSigningKey(key).build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("userEmail", String.class);
+    }
+
     public ObjectId extractUserId(String token) {
         String userIdStr = Jwts.parserBuilder().setSigningKey(key).build()
                 .parseClaimsJws(token)
                 .getBody()
                 .get("userId", String.class); // Extract as String
+
+
 
         return new ObjectId(userIdStr); // Convert back to ObjectId
     }

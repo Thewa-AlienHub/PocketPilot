@@ -1,19 +1,23 @@
 package org.example.pocketpilot.service.Impl;
 
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.example.pocketpilot.components.NotificationQueue;
-import org.example.pocketpilot.entities.BudgetEntity;
 import org.example.pocketpilot.enums.common.Status;
 import org.example.pocketpilot.model.NotificationModel;
 import org.example.pocketpilot.repository.BudgetRepository;
+import org.example.pocketpilot.repository.UserRepository;
 import org.example.pocketpilot.service.BudgetService;
 import org.example.pocketpilot.service.NotificationService;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.SimpleMailMessage;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @Slf4j
@@ -22,11 +26,17 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationQueue notificationQueue;
     private final BudgetService budgetService;
     private final BudgetRepository budgetRepository;
+    private final UserRepository userRepository;
+    private JavaMailSender mailSender;
+    private final SpringTemplateEngine templateEngine;
 
-    public NotificationServiceImpl(NotificationQueue notificationQueue, BudgetService budgetService, BudgetRepository budgetRepository) {
+    public NotificationServiceImpl(NotificationQueue notificationQueue, BudgetService budgetService, BudgetRepository budgetRepository, UserRepository userRepository, JavaMailSender mailSender, SpringTemplateEngine templateEngine) {
         this.notificationQueue = notificationQueue;
         this.budgetService = budgetService;
         this.budgetRepository = budgetRepository;
+        this.userRepository = userRepository;
+        this.mailSender = mailSender;
+        this.templateEngine = templateEngine;
     }
 
     // Process IMMEDIATE notifications instantly
@@ -101,13 +111,66 @@ public class NotificationServiceImpl implements NotificationService {
 //    }
 
 
-    private void sendNotification(NotificationModel notification) {
+    public void sendNotification(NotificationModel notification) {
+
+
+        if(notification.isEnableEmailNotification()){
+            sendEmailNotification(notification);
+        }
+
 
         notification.setStatus(Status.SENT);
         notification.setUpdatedAt(LocalDateTime.now());
         // Log the notification details
         log.info("📢 Notification Sent: UserID={} | Subject = {} | Message='{}' | Time={}",
                 notification.getUserId(),notification.getSubject(), notification.getMsgBody(), notification.getUpdatedAt());
+
+
+    }
+
+    private void sendEmailNotification(NotificationModel notification) {
+
+        try{
+            if (notification.getUserEmail() == null || notification.getUserEmail().isEmpty()) {
+                String userEmail = userRepository.getUserEmailByUserId(notification.getUserId());
+
+                if (userEmail != null) { // Avoid setting a null value
+                    notification.setUserEmail(userEmail);
+                } else {
+                    throw new IllegalArgumentException("User email not found for user ID: " + notification.getUserId());
+                }
+            }
+
+            // Create email context
+            Context context = new Context();
+            context.setVariable("userEmail", notification.getUserEmail());
+            context.setVariable("messageBody", notification.getMsgBody());
+
+            // Process template
+            String emailContent = templateEngine.process("email-template", context);
+
+            // Prepare email message
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setTo(notification.getUserEmail());
+            helper.setSubject(notification.getSubject());
+            helper.setText(emailContent, true); // Set 'true' for HTML content
+
+            mailSender.send(message);
+
+            notification.setStatus(Status.SENT);
+            notification.setUpdatedAt(LocalDateTime.now());
+
+            log.info("📢 Email Sent: To={} | Subject={} | Time={}",
+                    notification.getUserEmail(), notification.getSubject(), notification.getUpdatedAt());
+
+
+        }catch(Exception e){
+
+            log.error("❌ Failed to send email: {}", e.getMessage());
+            notification.setStatus(Status.FAILED);
+
+        }
 
     }
 }

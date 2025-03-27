@@ -12,9 +12,11 @@ import java.time.LocalDateTime;
 @Builder
 public class NotificationModel {
     private ObjectId userId;
+    private String userEmail;
     private String subject;
     private String msgBody;
     private NotificationType type;
+    private boolean enableEmailNotification;
     private Status status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

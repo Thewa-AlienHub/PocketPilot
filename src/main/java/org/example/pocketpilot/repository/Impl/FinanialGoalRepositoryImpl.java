@@ -58,7 +58,7 @@ public class FinanialGoalRepositoryImpl implements FinancialGoalRepository {
     }
 
     @Override
-    public void updateGoals(List<FinancialGoalModel> updatedGoals) {
+    public boolean updateGoals(List<FinancialGoalModel> updatedGoals) {
         for (FinancialGoalModel goal : updatedGoals) {
             Query query = new Query(Criteria.where("_id").is(goal.getId()));
             Update update = new Update()
@@ -66,6 +66,11 @@ public class FinanialGoalRepositoryImpl implements FinancialGoalRepository {
                     .set("updatedAt", goal.getUpdatedAt());
             mongoTemplate.updateFirst(query, update, FinancialGoalsEntity.class);
         }
+
+        if(updatedGoals.size() > 0){
+            return true;
+        }
+        return false;
     }
 
 

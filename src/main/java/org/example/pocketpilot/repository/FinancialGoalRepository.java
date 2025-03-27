@@ -14,5 +14,5 @@ public interface FinancialGoalRepository {
 
     List<FinancialGoalModel> getAutoAllocatedGoals(ObjectId userId);
 
-    void updateGoals(List<FinancialGoalModel> updatedGoals);
+    boolean updateGoals(List<FinancialGoalModel> updatedGoals);
 }

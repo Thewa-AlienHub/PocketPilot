@@ -1,29 +1,30 @@
 package org.example.pocketpilot.controller;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.example.pocketpilot.commonlib.Controller.ResponseController;
-import org.example.pocketpilot.dto.RequestDTO.TransactionRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.TransactionRequestDTO;
 import org.example.pocketpilot.dto.TransactionFilterDTO;
 import org.example.pocketpilot.service.TransactionService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@PreAuthorize("hasAuthority(UserRole.ADMIN.getRoleName() or UserRole.PREMIUM_USER.getRoleName() or UserRole.REGULAR_USER.getRoleName())")
 @RequestMapping("/api/transactions")
 @RequiredArgsConstructor
+@Validated
 @Slf4j
 public class TransactionController extends ResponseController {
 
     private final TransactionService transactionService;
 
     @PostMapping("/add")
-    public ResponseEntity<Object> addTransaction(@RequestBody TransactionRequestDTO dto) {
+    public ResponseEntity<Object> addTransaction(@Valid @RequestBody TransactionRequestDTO dto) {
         log.info("HIT - /add POST | dto : {}", dto);
         return sendResponse(transactionService.addTransaction(dto));
     }
@@ -41,16 +42,21 @@ public class TransactionController extends ResponseController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<Object>updateTransaction(@RequestParam ObjectId id ,@RequestBody TransactionRequestDTO dto) {
+    public ResponseEntity<Object>updateTransaction(@PathVariable ObjectId id ,@Valid @RequestBody TransactionRequestDTO dto) {
         log.info("HIT - /update PUT | Update Transaction With ID : {} | dto : {}", id,dto);
         return sendResponse(transactionService.updateTransactions(id,dto));
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Object>deleteTransaction(@RequestParam ObjectId id ) {
+    public ResponseEntity<Object>deleteTransaction(@PathVariable ObjectId id ) {
         log.info("HIT - /delete DELETE | Delete Transaction With ID : {} ", id);
         return sendResponse(transactionService.deleteTransactions(id));
     }
 
+    @GetMapping("/process-recurring-manual")
+    public String processRecurringManual() {
+        transactionService.processRecurringTransactions();
+        return "Recurring Transactions processed manually";
+    }
 
 }

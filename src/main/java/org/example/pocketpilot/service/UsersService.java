@@ -1,7 +1,7 @@
 package org.example.pocketpilot.service;
 
-import org.example.pocketpilot.dto.RequestDTO.LoginRequestDTO;
-import org.example.pocketpilot.dto.RequestDTO.SignUpRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.LoginRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.SignUpRequestDTO;
 import org.springframework.http.ResponseEntity;
 
 public interface UsersService {

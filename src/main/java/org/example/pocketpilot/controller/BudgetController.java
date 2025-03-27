@@ -4,14 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.pocketpilot.commonlib.Controller.ResponseController;
 import org.example.pocketpilot.dto.BudgetFilterDTO;
-import org.example.pocketpilot.dto.RequestDTO.BudgetRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.BudgetRequestDTO;
 import org.example.pocketpilot.service.BudgetService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@PreAuthorize("hasAuthority(UserRole.ADMIN.getRoleName() or UserRole.PREMIUM_USER.getRoleName() or UserRole.REGULAR_USER.getRoleName())")
 @RequestMapping("/api/budgets")
 @RequiredArgsConstructor
 @Slf4j

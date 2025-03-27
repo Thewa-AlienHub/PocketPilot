@@ -2,9 +2,7 @@ package org.example.pocketpilot.service;
 
 
 import org.bson.types.ObjectId;
-import org.example.pocketpilot.dto.RequestDTO.FinancialGoalsRequestDTO;
-import org.example.pocketpilot.dto.RequestDTO.TransactionRequestDTO;
-import org.example.pocketpilot.dto.TransactionFilterDTO;
+import org.example.pocketpilot.dto.requestDTO.FinancialGoalsRequestDTO;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;

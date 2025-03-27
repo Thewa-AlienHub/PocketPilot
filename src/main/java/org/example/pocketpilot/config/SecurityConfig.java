@@ -35,11 +35,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority(UserRole.ADMIN.getRoleName()) // Admin-only endpoints
                         .requestMatchers("/api/**").hasAnyAuthority(UserRole.ADMIN.getRoleName(),
-                                UserRole.PREMIUM_USER.getRoleName(),
-                                UserRole.REGULAR_USER.getRoleName())// Public endpoints
+                                UserRole.PREMIUM_USER.getRoleName(),UserRole.REGULAR_USER.getRoleName())
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",

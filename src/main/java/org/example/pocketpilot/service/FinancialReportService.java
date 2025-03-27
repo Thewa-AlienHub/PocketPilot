@@ -1,13 +1,7 @@
 package org.example.pocketpilot.service;
 
-import org.example.pocketpilot.dto.RequestDTO.FinancialReportRequestDTO;
-import org.example.pocketpilot.entities.TransactionEntity;
+import org.example.pocketpilot.dto.requestDTO.FinancialReportRequestDTO;
 import org.springframework.http.ResponseEntity;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 
 public interface FinancialReportService {
 

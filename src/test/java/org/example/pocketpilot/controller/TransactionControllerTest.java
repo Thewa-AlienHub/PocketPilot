@@ -2,8 +2,7 @@ package org.example.pocketpilot.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
-import org.example.pocketpilot.config.SecurityConfig;
-import org.example.pocketpilot.dto.RequestDTO.TransactionRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.TransactionRequestDTO;
 import org.example.pocketpilot.dto.TransactionFilterDTO;
 import org.example.pocketpilot.service.TransactionService;
 import org.example.pocketpilot.utils.JwtUtil;
@@ -13,11 +12,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -37,10 +35,10 @@ public class TransactionControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private TransactionService transactionService;
 
-    @MockBean
+    @MockitoBean
     private JwtUtil jwtUtil;
 
     @Autowired
@@ -51,7 +49,7 @@ public class TransactionControllerTest {
     @BeforeEach
     void setUp() {
         transactionRequestDTO = TransactionRequestDTO.builder()
-                .type("EXPENSE")
+                .type("expense")
                 .amount(BigDecimal.valueOf(100))
                 .category(2)
                 .tags(Collections.singletonList("food"))

@@ -25,7 +25,7 @@ public class CurencyConversionService {
 
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
 
-        System.out.println(response);
+
 
         if (response == null || !response.containsKey("conversion_rates")) {
             throw new RuntimeException("Failed to fetch exchange rates");
@@ -36,7 +36,9 @@ public class CurencyConversionService {
             throw new RuntimeException("Invalid currency code: " + toCurrency);
         }
 
-        BigDecimal exchangeRate = BigDecimal.valueOf(rates.get(toCurrency));
+        // Extract exchange rate as Number to handle both Integer and Double cases
+        Number rate = (Number) rates.get(toCurrency);
+        BigDecimal exchangeRate = BigDecimal.valueOf(rate.doubleValue());
         return amount.multiply(exchangeRate);
     }
 }

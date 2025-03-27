@@ -9,7 +9,13 @@ public enum TransactionCategory {
     TRAVEL(3, "Travel"),
     ENTERTAINMENT(4, "Entertainment"),
     BILLS(5, "Bills"),
-    GOALS(6, "Goals");
+    GOALS(6, "Goals"),
+    BONUS(8,"Bonus"),
+    GIFTS(9,"Gifts"),
+    OTHERINCOME(10,"OtherIncome");
+
+
+
 
     private final int id;
     private final String value;

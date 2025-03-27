@@ -5,21 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.example.pocketpilot.commonlib.Controller.ResponseController;
 import org.example.pocketpilot.commonlib.ErrorMessage;
-import org.example.pocketpilot.commonlib.Response;
-import org.example.pocketpilot.dto.RequestDTO.BudgetRequestDTO;
 import org.example.pocketpilot.entities.TransactionEntity;
-import org.example.pocketpilot.enums.TransactionCategory;
-import org.example.pocketpilot.enums.common.ResponseMessage;
 import org.example.pocketpilot.model.TransactionModel;
 import org.example.pocketpilot.repository.BudgetRepository;
 import org.example.pocketpilot.repository.FinancialGoalRepository;
 import org.example.pocketpilot.repository.TransactionRepository;
 import org.example.pocketpilot.repository.UserRepository;
 import org.example.pocketpilot.service.DashboardService;
-import org.example.pocketpilot.service.TransactionService;
 import org.example.pocketpilot.utils.CurencyConversionService;
 import org.example.pocketpilot.utils.CustomUserDetails;
-import org.example.pocketpilot.utils.JwtUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,7 +21,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -83,8 +76,8 @@ public class DashBoardServiceImpl extends ResponseController implements Dashboar
         BigDecimal convertedAmount = curencyConversionService.convertCurrency(entity.getAmount(),"LKR",UserCurrency);
 
         return TransactionModel.builder()
-                .id(entity.getId())
-                .userId(entity.getUserId())
+                .id(entity.getId().toHexString())
+                .userId(entity.getUserId().toHexString())
                 .type(entity.getType())
                 .amount(convertedAmount)
                 .category(entity.getCategory())

@@ -6,12 +6,16 @@ import org.bson.types.ObjectId;
 import org.example.pocketpilot.commonlib.Controller.ResponseController;
 import org.example.pocketpilot.commonlib.ErrorMessage;
 import org.example.pocketpilot.commonlib.Response;
-import org.example.pocketpilot.dto.RequestDTO.FinancialGoalsRequestDTO;
-import org.example.pocketpilot.dto.ResponseDTO.FinancialGoalResponseDTO;
+import org.example.pocketpilot.components.NotificationQueue;
+import org.example.pocketpilot.dto.requestDTO.FinancialGoalsRequestDTO;
+import org.example.pocketpilot.dto.responseDTO.FinancialGoalResponseDTO;
 import org.example.pocketpilot.entities.TransactionEntity;
+import org.example.pocketpilot.enums.NotificationType;
 import org.example.pocketpilot.enums.TransactionCategory;
 import org.example.pocketpilot.enums.common.ResponseMessage;
+import org.example.pocketpilot.enums.common.Status;
 import org.example.pocketpilot.model.FinancialGoalModel;
+import org.example.pocketpilot.model.NotificationModel;
 import org.example.pocketpilot.repository.FinancialGoalRepository;
 import org.example.pocketpilot.repository.TransactionRepository;
 import org.example.pocketpilot.service.FinancialGoalService;
@@ -39,6 +43,7 @@ public class FinancialGoalServiceImpl extends ResponseController implements Fina
     private final FinancialGoalRepository financialGoalRepository;
     private final TransactionRepository transactionRepository;
     private final JwtUtil jwtUtil;
+    private final NotificationQueue notificationQueue;
 
     private Authentication getAuthentication() {
         return SecurityContextHolder.getContext().getAuthentication();
@@ -133,6 +138,8 @@ public class FinancialGoalServiceImpl extends ResponseController implements Fina
             List<FinancialGoalModel> updatedGoals = new ArrayList<>();
             List<TransactionEntity> transactions = new ArrayList<>();
 
+            StringBuilder notificationMessage = new StringBuilder("Your financial goals have been updated:\n");
+
             for (FinancialGoalModel goals : goal) {
 
                 // Update the goal's current amount
@@ -140,6 +147,9 @@ public class FinancialGoalServiceImpl extends ResponseController implements Fina
                 goals.setCurrentAmount(newCurrentAmount);
                 goals.setUpdatedAt(LocalDateTime.now());
                 updatedGoals.add(goals);
+
+                // Append goal name and amount to message
+                notificationMessage.append(String.format("\n %s: %,.2f", goals.getGoalName(), goals.getCurrentAmount()));
 
                 // Create a transaction record
                 TransactionEntity transaction = TransactionEntity.builder()
@@ -157,7 +167,23 @@ public class FinancialGoalServiceImpl extends ResponseController implements Fina
             }
 
             // Update goals in the database
-            financialGoalRepository.updateGoals(updatedGoals);
+            boolean updated = financialGoalRepository.updateGoals(updatedGoals);
+
+            if(updated){
+
+                NotificationModel notificationModel = NotificationModel.builder()
+                        .userId(userId)
+                        .enableEmailNotification(true)
+                        .subject("Financial Goals Updated")
+                        .msgBody(notificationMessage.toString())
+                        .type(NotificationType.IMMEDIATE)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .status(Status.INITIALIZED)
+                        .build();
+
+                notificationQueue.enqueue(notificationModel);
+            }
 
             // Save transactions in the database
             transactionRepository.saveAll(transactions);

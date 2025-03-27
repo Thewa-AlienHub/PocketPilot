@@ -1,7 +1,7 @@
 package org.example.pocketpilot.repository.Impl;
 
 import org.bson.types.ObjectId;
-import org.example.pocketpilot.dto.RequestDTO.LoginRequestDTO;
+import org.example.pocketpilot.dto.requestDTO.LoginRequestDTO;
 import org.example.pocketpilot.entities.UserEntity;
 import org.example.pocketpilot.model.UserModel;
 import org.example.pocketpilot.repository.UserRepository;
@@ -94,6 +94,16 @@ public class UserRepositoryImpl implements UserRepository {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User Not Found");
         }
 
+    }
+
+    @Override
+    public String getUserEmailByUserId(ObjectId userId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(userId));
+        query.fields().include("email"); // Fetch only the email field
+
+        UserEntity user = mongoTemplate.findOne(query, UserEntity.class);
+        return user != null ? user.getEmail() : null;
     }
 
 

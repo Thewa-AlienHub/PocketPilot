@@ -1,4 +1,4 @@
-package org.example.pocketpilot.dto.ResponseDTO;
+package org.example.pocketpilot.dto.responseDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
